@@ -28,6 +28,16 @@ const path = '/3ird-space/v1/api'
 app.use(`${path}/auth`, authRoutes)
 app.use(`${path}/user`, authenticate, authorizeRoles('user'), userRoutes)
 
+app.use('/', (req, res) =>{
+    res.status(404).json({
+        message: 'Whoops, This is a universal route'
+    })
+})
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`)
 })
+
+
+// ewlu yoyx dygt iagz
+// 3irdSpace
