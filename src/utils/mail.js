@@ -70,7 +70,7 @@ const createUserMail = async (user, token) => {
                 <body>
                     <div class="container">
                         <div class="header">
-                            <img src="${process.env.APP_URL}/public/assets/logo.png" alt="${process.env.APP_NAME} Logo" width="50" height="50" style="margin-bottom: 10px;" />
+                            <img src="${process.env.API_URL}/public/assets/logo.png" alt="${process.env.APP_NAME} Logo" width="50" height="50" style="margin-bottom: 10px;" />
                             <h2>Welcome to ${process.env.APP_NAME}</h2>
                         </div>
                         <div class="content">
@@ -163,7 +163,7 @@ const createForgotPasswordMail = async (user, token) => {
                 <body>
                     <div class="container">
                         <div class="header">
-                            <img src="${process.env.APP_URL}/public/assets/logo.png" alt="${process.env.APP_NAME} Logo" width="50" height="50" style="margin-bottom: 10px;" />
+                            <img src="${process.env.API_URL}/public/assets/logo.png" alt="${process.env.APP_NAME} Logo" width="50" height="50" style="margin-bottom: 10px;" />
                             <h2>Password Reset Request</h2>
                         </div>
                         <div class="content">

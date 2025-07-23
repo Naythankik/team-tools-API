@@ -2,6 +2,7 @@ require('dotenv').config({quiet: true})
 const express = require('express')
 const cors = require('cors')
 const morgan = require('morgan')
+const setupSwaggerDocs = require('./swagger')
 const PORT = process.env.PORT
 const connection = require('./src/config/databaseConnection')
 
@@ -10,6 +11,7 @@ const userRoutes = require('./src/routes/userRoutes')
 const {authenticate, authorizeRoles} = require("./src/middlewares/authMiddleware");
 
 const app = express()
+
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 app.use(cors())
@@ -18,6 +20,8 @@ connection()
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
+
+setupSwaggerDocs(app)
 
 const path = '/3ird-space/v1/api'
 
