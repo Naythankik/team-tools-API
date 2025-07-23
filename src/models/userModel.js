@@ -44,6 +44,8 @@ const userSchema = new Schema(
     },
     {
         timestamps: true,
+        toObject: { virtuals: true },
+        toJSON: { virtuals: true },
     }
 );
 
@@ -54,6 +56,16 @@ userSchema.pre('save', async function (next) {
     next();
 });
 
+
+userSchema.virtual('token', {
+    ref: 'Token',
+    localField: '_id',
+    foreignField: 'user',
+    justOne: true,
+});
+
+userSchema.set('toObject', { virtuals: true });
+userSchema.set('toJSON', { virtuals: true });
 
 userSchema.methods.comparePassword = async function (inputPassword) {
     return await bcrypt.compare(inputPassword, this.password);
