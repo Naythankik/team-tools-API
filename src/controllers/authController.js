@@ -1,7 +1,7 @@
 const AuthService = require('../services/authService');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
 const userResource = require('../resources/userResource');
-const { verifyOTPRequest, emailRequest, registerRequest} = require("../requests/authRequest");
+const { verifyOTPRequest, emailRequest, registerRequest } = require("../requests/authRequest");
 
 class AuthController {
 
@@ -53,7 +53,12 @@ class AuthController {
                 return errorResponse(res, result.error, 400);
             }
 
-            return successResponse(res, 'User verified successfully', { user: userResource(result.user) }, 201);
+            return successResponse(
+                res,
+                'User verified successfully with the token for final Sign up',
+                { user: userResource(result.user), token: result.registrationToken },
+                201
+            );
         } catch (e) {
             return errorResponse(res, "Internal Server Error", 500, e.message);
         }
@@ -85,9 +90,9 @@ class AuthController {
         if (error) {
             return errorResponse(res, 'Validation Errors', 400, error.details.map(err => err.message));
         }
-
+        const { token } = req.params;
         try {
-            const result = await AuthService.createUser(value);
+            const result = await AuthService.createUser(value, token);
 
             if (result.error) {
                 return errorResponse(res, result.error, 400);

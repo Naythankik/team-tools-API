@@ -41,6 +41,7 @@ const userSchema = new Schema(
         },
         resetPasswordToken: String,
         resetPasswordExpires: Date,
+        registrationToken: String,
     },
     {
         timestamps: true,

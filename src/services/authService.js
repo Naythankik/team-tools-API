@@ -1,6 +1,6 @@
 const User = require('../models/userModel');
 const Token = require('../models/tokenModel');
-const { generateCode } = require("../utils/token");
+const { generateCode, generateToken} = require("../utils/token");
 const { createUserMail } = require("../utils/mail");
 
 /**
@@ -12,7 +12,6 @@ class AuthService {
      * Creates a new user if the email does not already exist.
      *
      * @param {Object} validatedData - Validated data containing user details
-     * @param {string} validatedData.email - Email address of the user
      * @returns {Promise<Object|string>} Returns an object with `user` if created, or an `error`/`message`
      */
     createUserEmail = async (validatedData) => {
@@ -71,8 +70,6 @@ class AuthService {
      * Verifies the OTP associated with the user's email.
      *
      * @param {Object} validatedData - Validated data containing user details
-     * @param {string} validatedData.email - Email address of the user
-     * @param {string} validatedData.otp - OTP sent to the user's email
      * @returns {Promise<Object>} Returns an object with `user` if verified, or an `error` message
      */
 
@@ -108,13 +105,16 @@ class AuthService {
                 return { error: 'OTP has expired. Request for a new one.' };
             }
 
+            const registrationToken = await generateToken(72);
+
             user.isEmailVerified = true;
+            user.registrationToken = registrationToken;
             await user.save();
 
             // Cleanup token
             await Token.deleteMany({ user: user._id });
 
-            return { user };
+            return { user, registrationToken };
         }catch (error){
             return { error: 'Internal server error' };
         }
@@ -124,7 +124,6 @@ class AuthService {
      * Sends a new OTP to the user's email address.
      *
      * @param {Object} validatedData - Validated data containing user details
-     * @param {string} validatedData.email - Email address of the user
      * @returns {Promise<Object>} Returns a success message or an error object
      */
 
@@ -162,17 +161,14 @@ class AuthService {
      * Completes user registration after verifying email, by setting name and password.
      *
      * @param {Object} validated - Validated data from the frontend
-     * @param {string} validated.firstName - First name of the user
-     * @param {string} validated.lastName - Last name of the user
-     * @param {string} validated.password - Password of the user (should be hashed before saving)
-     * @param {string} validated.email - Email address of the user
+     * @param token
      * @returns {Promise<Object>} Returns the updated user or an error message
      */
-    createUser = async (validated) => {
-        const { firstName, lastName, password, email } = validated;
+    createUser = async (validated, token) => {
+        const { firstName, lastName, password } = validated;
 
         try{
-            const user = await User.findOne({email})
+            const user = await User.findOne({registrationToken: token})
 
             if(!user){
                 return { error: 'User not found' };
@@ -181,8 +177,9 @@ class AuthService {
             user.firstName = firstName;
             user.lastName = lastName;
             user.password = password;
-            await user.save();
+            user.registrationToken = undefined;
 
+            await user.save();
             return { user }
         }catch (error){
             return { error: 'Internal server error' };
