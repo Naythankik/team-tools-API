@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "name": "3irdSpace - Team Tools",
+  "builds": [
+    {
+      "src": "app.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/routes/(.*)",
+      "dest": "/app.js"
+    }
+  ]
+}
