@@ -29,10 +29,15 @@ const generateCode = async () => {
 const generateToken = async (len = 32) => {
     const token = crypto.randomBytes(len).toString('hex');
 
-    const checkIfTokenExists = await User.findOne({ registrationToken: token }).lean()
+    const checkIfTokenExists = await User.findOne({
+        $or : [
+            { registrationToken: token },
+            { resetPasswordToken: token }
+        ]
+    }).lean()
 
     if(checkIfTokenExists){
-        return generateToken()
+        return await generateToken()
     }
 
     return token;
@@ -66,6 +71,6 @@ const verifyJwtToken = (token) => {
 module.exports = {
     generateCode,
     generateToken,
+    verifyJwtToken,
     generateJwtToken,
-    verifyJwtToken
 };

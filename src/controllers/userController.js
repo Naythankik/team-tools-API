@@ -29,13 +29,8 @@ class UserController{
     }
 
     logout = async (req, res) => {
-        res.clearCookie('refreshToken', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
-        });
-
-        return successResponse(res,  'Logged out successfully');
+        const response = await userService.logout(req, res);
+        return successResponse(res,  response.message, {}, 200);
     }
 
     getCurrentUser = async (req, res) => {

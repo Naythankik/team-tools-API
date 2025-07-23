@@ -1,7 +1,7 @@
 const User = require('../models/userModel');
 const Token = require('../models/tokenModel');
-const { generateCode, generateToken, generateJwtToken} = require("../utils/token");
-const { createUserMail } = require("../utils/mail");
+const { generateCode, generateToken, generateJwtToken } = require("../utils/token");
+const { createUserMail, createForgotPasswordMail} = require("../utils/mail");
 const {errorResponse} = require("../utils/responseHandler");
 const UserResource = require("../resources/userResource");
 
@@ -235,6 +235,59 @@ class AuthService {
             user: UserResource(user)
         };
     };
+
+    forgotPassword = async (res, { email }) => {
+        try{
+            const user = await User.findOne({ email });
+
+            if (!user) {
+                return errorResponse(res, 'No user found with that email', 404);
+            }
+            const token = await generateToken(144);
+
+            user.resetPasswordToken = token;
+            user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
+            await user.save({ validateBeforeSave: false });
+
+            await createForgotPasswordMail(user, token);
+
+            return { message: 'Check your email for a password reset link' };
+
+        }catch (error){
+            console.log(error)
+            return { error: 'Internal server error' };
+        }
+    }
+
+    resetPassword = async (res, value) => {
+        try{
+            const { identifier, token, newPassword, confirmPassword } = value;
+
+            if (newPassword !== confirmPassword) {
+                return errorResponse(res, 'Passwords do not match', 400);
+            }
+
+            const user = await User.findOne({
+                $or: [{ email: identifier }, { username: identifier }],
+                resetPasswordToken: token,
+                resetPasswordExpires: { $gt: Date.now() }
+            });
+
+            if (!user) {
+                return errorResponse(res, 'Invalid or expired token', 400);
+            }
+
+            user.password = newPassword;
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpires = undefined;
+            await user.save();
+
+            return { message : 'Password reset successful' };
+        } catch (err) {
+            console.error(err);
+            return errorResponse(res, 'Something went wrong', 500);
+        }
+    }
 }
 
 module.exports = new AuthService();

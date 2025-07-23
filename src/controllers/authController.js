@@ -1,7 +1,7 @@
 const AuthService = require('../services/authService');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
 const userResource = require('../resources/userResource');
-const { verifyOTPRequest, emailRequest, registerRequest, loginRequest} = require("../requests/authRequest");
+const { verifyOTPRequest, emailRequest, registerRequest, loginRequest, resetPasswordRequest} = require("../requests/authRequest");
 
 class AuthController {
 
@@ -119,6 +119,39 @@ class AuthController {
             return errorResponse(res, error.message, 401);
         }
     }
+
+    forgotPassword = async (req, res) => {
+        const { error, value} = emailRequest(req.body || {});
+
+        if (error) {
+            return errorResponse(res, error.details[0].message, 400);
+        }
+
+        try {
+            const response = await AuthService.forgotPassword(res, value);
+
+            return successResponse(res, response.message);
+        } catch (err) {
+            return errorResponse(res, 'Failed to send reset email', 500);
+        }
+    }
+
+    resetPassword = async (req, res) => {
+        const { error, value} = resetPasswordRequest(req.body || {});
+
+        if (error) {
+            return errorResponse(res, 'Validation errors', 400, error.details.map(err => err.message));
+        }
+
+        try {
+            const response = await AuthService.resetPassword(res, value);
+
+            return successResponse(res, response.message);
+        } catch (err) {
+            return errorResponse(res, 'Failed to reset password', 500);
+        }
+    }
+
 }
 
 module.exports = new AuthController();

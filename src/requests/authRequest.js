@@ -28,10 +28,19 @@ const loginRequest = (data) => {
     }).validate(data, { abortEarly: false });
 }
 
+const resetPasswordRequest = (data) => {
+    return Joi.object({
+        identifier: Joi.string().required(),
+        newPassword: Joi.string().required(),
+        confirmPassword: Joi.string().required(),
+        token: Joi.string().required()
+    }).validate(data, { abortEarly: false });
+}
 
 module.exports = {
     emailRequest,
-    verifyOTPRequest,
+    loginRequest,
     registerRequest,
-    loginRequest
+    verifyOTPRequest,
+    resetPasswordRequest
 }
