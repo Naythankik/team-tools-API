@@ -73,9 +73,6 @@ userSchema.virtual('token', {
     justOne: true,
 });
 
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
-
 userSchema.methods.comparePassword = async function (inputPassword) {
     return await bcrypt.compare(inputPassword, this.password);
 };

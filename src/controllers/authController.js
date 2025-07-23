@@ -1,7 +1,7 @@
 const AuthService = require('../services/authService');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
 const userResource = require('../resources/userResource');
-const { verifyOTPRequest, emailRequest, registerRequest } = require("../requests/authRequest");
+const { verifyOTPRequest, emailRequest, registerRequest, loginRequest} = require("../requests/authRequest");
 
 class AuthController {
 
@@ -104,6 +104,21 @@ class AuthController {
         }
     }
 
+    login = async (req, res) => {
+        const { error, value } = loginRequest(req.body || {});
+
+        if (error) {
+           return errorResponse(res, 'Validation Errors', 400, error.details.map(err => err.message));
+        }
+
+        try {
+            const response = await AuthService.loginUser(res, value);
+
+            return successResponse(res, 'Login successful', response, 200);
+        }catch (error){
+            return errorResponse(res, error.message, 401);
+        }
+    }
 }
 
 module.exports = new AuthController();

@@ -1,7 +1,9 @@
 const User = require('../models/userModel');
 const Token = require('../models/tokenModel');
-const { generateCode, generateToken} = require("../utils/token");
+const { generateCode, generateToken, generateJwtToken} = require("../utils/token");
 const { createUserMail } = require("../utils/mail");
+const {errorResponse} = require("../utils/responseHandler");
+const UserResource = require("../resources/userResource");
 
 /**
  * Service class for authentication-related logic.
@@ -185,6 +187,54 @@ class AuthService {
             return { error: 'Internal server error' };
         }
     }
+
+    /**
+     * * Authenticates a user and returns a JWT access token with user details.
+     *
+     * @param res
+     * @param identifier
+     * @param password
+     * @returns {Promise<{access_token: string, user: object}|*>}
+     */
+    loginUser = async (res, { identifier, password }) => {
+        // identifier can be email or username
+        const user = await User.findOne({
+            $or: [{ email: identifier }, { username: identifier }],
+        }).select('+password');
+
+        if (!user) {
+            return errorResponse(res, 'Invalid credentials', 401);
+        }
+
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            return errorResponse(res, 'Invalid credentials', 401);
+        }
+
+        if (!user.isEmailVerified) {
+            return errorResponse(res, 'Account not verified', 403);
+        }
+
+        // Generate JWT
+        const accessToken = generateJwtToken(user, '15m')
+        const refreshToken = generateJwtToken(user, '30d')
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // secure cookie on production
+            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // allow cross-site if needed
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        });
+
+        user.whenLastActive = new Date();
+        user.isActive = true
+        await user.save();
+
+        return {
+            access_token: accessToken,
+            user: UserResource(user)
+        };
+    };
 }
 
 module.exports = new AuthService();

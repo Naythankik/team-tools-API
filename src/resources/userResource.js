@@ -4,6 +4,9 @@ const formatUser = (user) => {
     return {
         id: user._id,
         username: user.username,
+        whenLastActive: user.whenLastActive,
+        telephone: user.telephone,
+        isActive: user.isActive,
         email: user.email,
         fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
         avatar: user.avatar,

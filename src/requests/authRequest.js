@@ -21,9 +21,17 @@ const registerRequest = (data) => {
     }).validate(data, { abortEarly: false });
 }
 
+const loginRequest = (data) => {
+    return Joi.object({
+        identifier: Joi.string().required(),
+        password: Joi.string().required()
+    }).validate(data, { abortEarly: false });
+}
+
 
 module.exports = {
     emailRequest,
     verifyOTPRequest,
-    registerRequest
+    registerRequest,
+    loginRequest
 }

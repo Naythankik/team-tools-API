@@ -6,6 +6,8 @@ const PORT = process.env.PORT
 const connection = require('./src/config/databaseConnection')
 
 const authRoutes = require('./src/routes/authRoutes')
+const userRoutes = require('./src/routes/userRoutes')
+const {authenticate, authorizeRoles} = require("./src/middlewares/authMiddleware");
 
 const app = express()
 app.use(express.json())
@@ -20,6 +22,7 @@ if (process.env.NODE_ENV === 'development') {
 const path = '/3ird-space/v1/api'
 
 app.use(`${path}/auth`, authRoutes)
+app.use(`${path}/user`, authenticate, authorizeRoles('user'), userRoutes)
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`)
