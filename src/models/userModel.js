@@ -22,7 +22,6 @@ const userSchema = new Schema(
         },
         avatar: {
             type: String,
-            unique: true,
             default: 'https://res.cloudinary.com/dxfq3iotg/image/upload/v1618434288/users/default_j9j98z.png',
         },
         password: {
@@ -35,6 +34,15 @@ const userSchema = new Schema(
             enum: ['user', 'admin'],
             default: 'user',
         },
+        telephone: {
+            type: String,
+            unique: true,
+        },
+        isActive: {
+            type: Boolean,
+            default: false,
+        },
+        whenLastActive: Date,
         isEmailVerified: {
             type: Boolean,
             default: false,
@@ -65,8 +73,8 @@ userSchema.virtual('token', {
     justOne: true,
 });
 
-userSchema.set('toObject', { virtuals: true });
-userSchema.set('toJSON', { virtuals: true });
+userSchema.index({ email: 1 });
+userSchema.index({ username: 1 });
 
 userSchema.methods.comparePassword = async function (inputPassword) {
     return await bcrypt.compare(inputPassword, this.password);
