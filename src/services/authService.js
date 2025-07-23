@@ -13,9 +13,9 @@ class AuthService {
      *
      * @param {Object} validatedData - Validated data containing user details
      * @param {string} validatedData.email - Email address of the user
-     * @returns {Promise<Object|string>} Returns an object with `user` if created, or `error` if user doesn't exist
+     * @returns {Promise<Object|string>} Returns an object with `user` if created, or an `error`/`message`
      */
-    createUser = async (validatedData) => {
+    createUserEmail = async (validatedData) => {
         const { email } = validatedData;
 
         try {
@@ -25,7 +25,8 @@ class AuthService {
             if (existingUser) {
                 const token = existingUser.token;
 
-                if (token && token.expiresAt > Date.now()) {
+                const isTokenExpired = (token) => !token || token.expiresAt <= Date.now();
+                if (isTokenExpired(token)) {
                     return {
                         message: 'Token has already been sent. Please check your email.',
                     };
@@ -52,56 +53,97 @@ class AuthService {
             const user = await User.create({ email });
 
             const otp = await generateCode();
-            await Token.create({ otp, user: user._id });
+            await Token.create({
+                otp,
+                user: user._id,
+                expiresAt: Date.now() + 10 * 60 * 1000,
+            });
             await createUserMail(user, otp);
 
             return { user };
         } catch (e) {
             console.error(e);
-            return 'Internal server error';
+            return { error: 'Internal server error' };
         }
     };
 
     /**
-     * Verify the user token if the email does not already exist.
+     * Verifies the OTP associated with the user's email.
      *
      * @param {Object} validatedData - Validated data containing user details
      * @param {string} validatedData.email - Email address of the user
-     * @param {string} validatedData.otp - OTP sent to the user mail
-     * @returns {Promise<Object|string>} Returns an object with `user` if verified, or `error` if user exists
+     * @param {string} validatedData.otp - OTP sent to the user's email
+     * @returns {Promise<Object>} Returns an object with `user` if verified, or an `error` message
      */
+
     verifyOTP = async (validatedData) => {
         const { otp, email } = validatedData;
 
-        // Find the user and populate the token
-        const user = await User.findOne({ email }).populate('token');
+        try{
+            // Find the user and populate the token
+            const user = await User.findOne({ email }).populate('token');
 
-        if (!user) {
-            return { error: 'User not found' };
-        }
+            if (!user) {
+                return { error: 'User not found' };
+            }
 
-        if(user.isEmailVerified) {
-            return { error: 'User already verified' };
-        }
+            if(user.isEmailVerified) {
+                return { error: 'User already verified' };
+            }
 
-        const token = user.token;
+            const token = user.token;
 
-        // Check if the token exists and is valid
-        if (!token || !token.otp) {
-            return { error: 'OTP token not found or invalid' };
-        }
+            // Check if the token exists and is valid
+            if (!token || !token.otp) {
+                return { error: 'OTP token not found or invalid' };
+            }
 
-        // Check OTP match
-        if (token.otp !== otp) {
-            return { error: 'OTP is incorrect. Try again.' };
-        }
+            // Check OTP match
+            if (token.otp !== otp) {
+                return { error: 'OTP is incorrect. Try again.' };
+            }
 
-        // Check expiration
-        if (token.expiresAt < Date.now()) {
-            // Optionally delete expired token
+            // Check expiration
+            if (token.expiresAt < Date.now()) {
+                return { error: 'OTP has expired. Request for a new one.' };
+            }
+
+            user.isEmailVerified = true;
+            await user.save();
+
+            // Cleanup token
             await Token.deleteMany({ user: user._id });
 
-            // Generate a new token (optional - depending on flow)
+            return { user };
+        }catch (error){
+            return { error: 'Internal server error' };
+        }
+    };
+
+    /**
+     * Sends a new OTP to the user's email address.
+     *
+     * @param {Object} validatedData - Validated data containing user details
+     * @param {string} validatedData.email - Email address of the user
+     * @returns {Promise<Object>} Returns a success message or an error object
+     */
+
+    createNewOTP = async (validatedData) => {
+        const { email } = validatedData;
+
+        try{
+            const user = await User.findOne({ email });
+
+            if(!user){
+                return { error: 'User not found' };
+            }
+
+            if(user.isEmailVerified){
+                return { error: 'User already verified' };
+            }
+
+            await Token.deleteMany({ user: user._id });
+
             const newOTP = await generateCode();
             await Token.create({
                 otp: newOTP,
@@ -110,21 +152,42 @@ class AuthService {
             });
 
             await createUserMail(user, newOTP);
-
-            return { error: 'OTP has expired. A new one has been sent.' };
+            return { message: 'OTP has been sent to the provided email' };
+        }catch (error) {
+            return { error: 'Internal server error' };
         }
+    }
 
-        // All good — verify users
-        user.isEmailVerified = true;
-        await user.save();
+    /**
+     * Completes user registration after verifying email, by setting name and password.
+     *
+     * @param {Object} validated - Validated data from the frontend
+     * @param {string} validated.firstName - First name of the user
+     * @param {string} validated.lastName - Last name of the user
+     * @param {string} validated.password - Password of the user (should be hashed before saving)
+     * @param {string} validated.email - Email address of the user
+     * @returns {Promise<Object>} Returns the updated user or an error message
+     */
+    createUser = async (validated) => {
+        const { firstName, lastName, password, email } = validated;
 
-        // Cleanup token
-        await Token.deleteMany({ user: user._id });
+        try{
+            const user = await User.findOne({email})
 
-        return { user };
-    };
+            if(!user){
+                return { error: 'User not found' };
+            }
 
+            user.firstName = firstName;
+            user.lastName = lastName;
+            user.password = password;
+            await user.save();
 
+            return { user }
+        }catch (error){
+            return { error: 'Internal server error' };
+        }
+    }
 }
 
 module.exports = new AuthService();

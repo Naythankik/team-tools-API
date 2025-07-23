@@ -5,6 +5,7 @@ const authenticate = require('../middlewares/authMiddleware');
 
 router.post('/register/initialPhase', authController.registerWithEmail);
 router.post('/register/verify-otp', authController.verifyOTP);
+router.post('/register/request-otp', authController.requestOTP);
 router.post('/register/finalPhase', authController.completeRegister);
 // router.post('/login', authController.login);
 // router.post('/forgot-password', authController.forgotPassword);
