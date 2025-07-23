@@ -37,7 +37,3 @@ app.use('/', (req, res) =>{
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`)
 })
-
-
-// ewlu yoyx dygt iagz
-// 3irdSpace
