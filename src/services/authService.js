@@ -223,7 +223,7 @@ class AuthService {
             throw new Error('Account not verified');
         }
 
-        const accessToken = generateJwtToken(user, '1m');
+        const accessToken = generateJwtToken(user, '15m');
         const refreshToken = generateJwtToken(user, '30d');
 
         user.whenLastActive = new Date();
@@ -291,7 +291,7 @@ class AuthService {
             throw new Error('Invalid or inactive user');
         }
 
-        const newAccessToken = generateJwtToken(user, '1m');
+        const newAccessToken = generateJwtToken(user, '15m');
         const newRefreshToken = generateJwtToken(user, '30d');
 
         return  {
