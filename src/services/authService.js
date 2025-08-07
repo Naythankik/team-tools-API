@@ -242,7 +242,13 @@ class AuthService {
             const user = await User.findOne({ email });
 
             if (!user) {
-                return { error: 'No user found with that email' };
+                return { message: 'If an account with that email exists, a password reset link has been sent.' };
+            }
+
+            if (user.resetPasswordToken && user.resetPasswordExpires > Date.now()) {
+                return {
+                    message: 'A reset link was recently sent. Please check your email or wait a few minutes before requesting again.'
+                };
             }
 
             const token = await generateToken(144);
@@ -252,8 +258,9 @@ class AuthService {
             await user.save({ validateBeforeSave: false });
             await createForgotPasswordMail(user, token);
 
-            return { message: 'Check your email for a password reset link' };
-
+            return {
+                message: `A password reset link has been sent to ${email}. Please check your inbox and spam folder.`
+            };
         }catch (error){
             console.log(error)
             return { error: 'Internal server error' };
@@ -262,17 +269,20 @@ class AuthService {
 
     resetPassword = async ({ identifier, token, newPassword, confirmPassword }) => {
         if (newPassword !== confirmPassword) {
-            throw new Error('Passwords do not match');
+            return { error: 'Passwords do not match'};
         }
 
         const user = await User.findOne({
             $or: [{ email: identifier }, { username: identifier }],
-            resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() },
+            resetPasswordToken: token
         });
 
         if (!user) {
-            throw new Error('Invalid or expired token');
+            return { error: 'Invalid reset token or email/username.' };
+        }
+
+        if (user.resetPasswordExpires < Date.now()) {
+            return { error: 'Reset token has expired. Please request a new one.' };
         }
 
         user.password = newPassword;

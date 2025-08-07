@@ -182,6 +182,10 @@ class AuthController {
 
         try {
             const result = await AuthService.resetPassword(value);
+            if(result.error) {
+                return errorResponse(res, result.error, 400);
+            }
+
             return successResponse(res, result.message);
         } catch (err) {
             return errorResponse(res, 'Failed to reset password', 500);

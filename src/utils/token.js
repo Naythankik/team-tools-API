@@ -23,11 +23,11 @@ const generateCode = async () => {
 /**
  * Generate random token with dynamic length
  *
- * @param len
  * @returns {Promise<*|string>}
+ * @param length
  */
-const generateToken = async (len = 32) => {
-    const token = crypto.randomBytes(len).toString('hex');
+const generateToken = async (length = 32) => {
+    const token = crypto.randomBytes(length).toString('hex');
 
     const checkIfTokenExists = await User.findOne({
         $or : [
