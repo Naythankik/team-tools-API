@@ -1,6 +1,7 @@
 require('dotenv').config({quiet: true})
 const express = require('express')
 const cors = require('cors')
+const cookieParser = require('cookie-parser')
 const morgan = require('morgan')
 const setupSwaggerDocs = require('./swagger')
 const PORT = process.env.PORT
@@ -14,7 +15,20 @@ const app = express()
 
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
-app.use(cors())
+app.use(cookieParser())
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'X-Requested-With',
+        'Accept',
+        'Cookie'
+    ],
+}));
+
 connection()
 
 if (process.env.NODE_ENV === 'development') {

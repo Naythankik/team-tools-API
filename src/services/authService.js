@@ -1,8 +1,7 @@
 const User = require('../models/userModel');
 const Token = require('../models/tokenModel');
-const { generateCode, generateToken, generateJwtToken } = require("../utils/token");
+const { generateCode, generateToken, generateJwtToken, verifyJwtToken} = require("../utils/token");
 const { createUserMail, createForgotPasswordMail} = require("../utils/mail");
-const {errorResponse} = require("../utils/responseHandler");
 const UserResource = require("../resources/userResource");
 
 /**
@@ -22,23 +21,21 @@ class AuthService {
         try {
             const existingUser = await User.findOne({ email }).populate('token', 'expiresAt');
 
-            // If the user already exists
             if (existingUser) {
                 const token = existingUser.token;
 
-                const isTokenExpired = (token) => !token || token.expiresAt <= Date.now();
-                if (isTokenExpired(token)) {
-                    return {
-                        message: 'Token has already been sent. Please check your email.',
-                    };
-                }
+                const isTokenExpired = !token || token.expiresAt <= Date.now();
 
-                // If token is expired, regenerate
-                if (token && token.expiresAt <= Date.now()) {
-                    await Token.deleteMany({user: existingUser._id});
+                if (isTokenExpired) {
+                    await Token.deleteMany({ user: existingUser._id });
 
                     const newOtp = await generateCode();
-                    await Token.create({ otp: newOtp, user: existingUser._id });
+                    await Token.create({
+                        otp: newOtp,
+                        user: existingUser._id,
+                        expiresAt: Date.now() + 10 * 60 * 1000,
+                    });
+                    await createUserMail(existingUser, newOtp);
 
                     return {
                         user: existingUser,
@@ -46,11 +43,13 @@ class AuthService {
                     };
                 }
 
-                // User exists but has no token
-                return { error: 'User already exists' };
+                // Token still valid
+                return {
+                    message: 'Token has already been sent. Please check your email.',
+                };
             }
 
-            // No user exists, create a new user
+            // No user exists
             const user = await User.create({ email });
 
             const otp = await generateCode();
@@ -61,7 +60,11 @@ class AuthService {
             });
             await createUserMail(user, otp);
 
-            return { user };
+            return {
+                user,
+                message: 'User created successfully',
+            };
+
         } catch (e) {
             console.error(e);
             return { error: 'Internal server error' };
@@ -78,33 +81,29 @@ class AuthService {
     verifyOTP = async (validatedData) => {
         const { otp, email } = validatedData;
 
-        try{
-            // Find the user and populate the token
+        try {
             const user = await User.findOne({ email }).populate('token');
 
             if (!user) {
                 return { error: 'User not found' };
             }
 
-            if(user.isEmailVerified) {
+            if (user.isEmailVerified) {
                 return { error: 'User already verified' };
             }
 
             const token = user.token;
 
-            // Check if the token exists and is valid
             if (!token || !token.otp) {
                 return { error: 'OTP token not found or invalid' };
             }
 
-            // Check OTP match
             if (token.otp !== otp) {
                 return { error: 'OTP is incorrect. Try again.' };
             }
 
-            // Check expiration
             if (token.expiresAt < Date.now()) {
-                return { error: 'OTP has expired. Request for a new one.' };
+                return { error: 'OTP has expired. Request a new one.' };
             }
 
             const registrationToken = await generateToken(72);
@@ -113,11 +112,15 @@ class AuthService {
             user.registrationToken = registrationToken;
             await user.save();
 
-            // Cleanup token
             await Token.deleteMany({ user: user._id });
 
-            return { user, registrationToken };
-        }catch (error){
+            return {
+                user,
+                registrationToken,
+                message: 'Email successfully verified',
+            };
+        } catch (error) {
+            console.error(error);
             return { error: 'Internal server error' };
         }
     };
@@ -129,17 +132,17 @@ class AuthService {
      * @returns {Promise<Object>} Returns a success message or an error object
      */
 
-    createNewOTP = async (validatedData) => {
+    requestNewOTP = async (validatedData) => {
         const { email } = validatedData;
 
-        try{
+        try {
             const user = await User.findOne({ email });
 
-            if(!user){
+            if (!user) {
                 return { error: 'User not found' };
             }
 
-            if(user.isEmailVerified){
+            if (user.isEmailVerified) {
                 return { error: 'User already verified' };
             }
 
@@ -153,8 +156,13 @@ class AuthService {
             });
 
             await createUserMail(user, newOTP);
-            return { message: 'OTP has been sent to the provided email' };
-        }catch (error) {
+
+            return {
+                message: 'OTP has been sent to the provided email',
+                user
+            };
+        } catch (error) {
+            console.error(error);
             return { error: 'Internal server error' };
         }
     }
@@ -169,24 +177,29 @@ class AuthService {
     createUser = async (validated, token) => {
         const { firstName, lastName, password } = validated;
 
-        try{
-            const user = await User.findOne({registrationToken: token})
+        try {
+            const user = await User.findOne({ registrationToken: token });
 
-            if(!user){
-                return { error: 'User not found' };
+            if (!user) {
+                return { error: 'User not found or token is invalid/expired' };
             }
 
             user.firstName = firstName;
             user.lastName = lastName;
-            user.password = password;
+            user.password = password; // Make sure this gets hashed in your User model
             user.registrationToken = undefined;
 
             await user.save();
-            return { user }
-        }catch (error){
+
+            return {
+                user,
+                message: 'User profile completed successfully',
+            };
+        } catch (error) {
+            console.error('[createUser]', error);
             return { error: 'Internal server error' };
         }
-    }
+    };
 
     /**
      * * Authenticates a user and returns a JWT access token with user details.
@@ -196,59 +209,47 @@ class AuthService {
      * @param password
      * @returns {Promise<{access_token: string, user: object}|*>}
      */
-    loginUser = async (res, { identifier, password }) => {
-        // identifier can be email or username
+
+    loginUser = async ({ identifier, password }) => {
         const user = await User.findOne({
             $or: [{ email: identifier }, { username: identifier }],
         }).select('+password');
 
-        if (!user) {
-            return errorResponse(res, 'Invalid credentials', 401);
-        }
-
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
-            return errorResponse(res, 'Invalid credentials', 401);
+        if (!user || !(await user.comparePassword(password))) {
+            throw new Error('Invalid credentials');
         }
 
         if (!user.isEmailVerified) {
-            return errorResponse(res, 'Account not verified', 403);
+            throw new Error('Account not verified');
         }
 
-        // Generate JWT
-        const accessToken = generateJwtToken(user, '15m')
-        const refreshToken = generateJwtToken(user, '30d')
-
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // secure cookie on production
-            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // allow cross-site if needed
-            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-        });
+        const accessToken = generateJwtToken(user, '1m');
+        const refreshToken = generateJwtToken(user, '30d');
 
         user.whenLastActive = new Date();
-        user.isActive = true
+        user.isActive = true;
         await user.save();
 
         return {
             access_token: accessToken,
+            refresh_token: refreshToken,
             user: UserResource(user)
         };
     };
 
-    forgotPassword = async (res, { email }) => {
+    forgotPassword = async ({ email }) => {
         try{
             const user = await User.findOne({ email });
 
             if (!user) {
-                return errorResponse(res, 'No user found with that email', 404);
+                return { error: 'No user found with that email' };
             }
-            const token = await generateToken(144);
 
+            const token = await generateToken(144);
             user.resetPasswordToken = token;
             user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
-            await user.save({ validateBeforeSave: false });
 
+            await user.save({ validateBeforeSave: false });
             await createForgotPasswordMail(user, token);
 
             return { message: 'Check your email for a password reset link' };
@@ -259,35 +260,46 @@ class AuthService {
         }
     }
 
-    resetPassword = async (res, value) => {
-        try{
-            const { identifier, token, newPassword, confirmPassword } = value;
-
-            if (newPassword !== confirmPassword) {
-                return errorResponse(res, 'Passwords do not match', 400);
-            }
-
-            const user = await User.findOne({
-                $or: [{ email: identifier }, { username: identifier }],
-                resetPasswordToken: token,
-                resetPasswordExpires: { $gt: Date.now() }
-            });
-
-            if (!user) {
-                return errorResponse(res, 'Invalid or expired token', 400);
-            }
-
-            user.password = newPassword;
-            user.resetPasswordToken = undefined;
-            user.resetPasswordExpires = undefined;
-            await user.save();
-
-            return { message : 'Password reset successful' };
-        } catch (err) {
-            console.error(err);
-            return errorResponse(res, 'Something went wrong', 500);
+    resetPassword = async ({ identifier, token, newPassword, confirmPassword }) => {
+        if (newPassword !== confirmPassword) {
+            throw new Error('Passwords do not match');
         }
+
+        const user = await User.findOne({
+            $or: [{ email: identifier }, { username: identifier }],
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            throw new Error('Invalid or expired token');
+        }
+
+        user.password = newPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        return { message: 'Password reset successful' };
+    };
+
+    refreshToken = async (token) => {
+        const decoded = verifyJwtToken(token);
+
+        const user = await User.findById(decoded.id);
+        if (!user || !user.isActive) {
+            throw new Error('Invalid or inactive user');
+        }
+
+        const newAccessToken = generateJwtToken(user, '1m');
+        const newRefreshToken = generateJwtToken(user, '30d');
+
+        return  {
+            access_token: newAccessToken,
+            refresh_token: newRefreshToken,
+        };
     }
+
 }
 
 module.exports = new AuthService();
