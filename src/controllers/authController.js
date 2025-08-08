@@ -1,7 +1,7 @@
 const AuthService = require('../services/authService');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
 const userResource = require('../resources/userResource');
-const { verifyOTPRequest, emailRequest, registerRequest, loginRequest, resetPasswordRequest} = require("../requests/authRequest");
+const { verifyOTPRequest, emailRequest, registerRequest, loginRequest, resetPasswordRequest } = require("../requests/authRequest");
 
 class AuthController {
 

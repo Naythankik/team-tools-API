@@ -19,34 +19,16 @@ class AuthService {
         const { email } = validatedData;
 
         try {
-            const existingUser = await User.findOne({ email }).populate('token', 'expiresAt');
+            const existingUser = await User.findOne({ email })
+                .populate('token', 'expiresAt')
+                .lean();
 
             if (existingUser) {
-                const token = existingUser.token;
-
-                const isTokenExpired = !token || token.expiresAt <= Date.now();
-
-                if (isTokenExpired) {
-                    await Token.deleteMany({ user: existingUser._id });
-
-                    const newOtp = await generateCode();
-                    await Token.create({
-                        otp: newOtp,
-                        user: existingUser._id,
-                        expiresAt: Date.now() + 10 * 60 * 1000,
-                    });
-                    await createUserMail(existingUser, newOtp);
-
-                    return {
-                        user: existingUser,
-                        message: 'A new token has been generated.',
-                    };
+                if(!existingUser.isEmailVerified){
+                    return { message: 'A verification email has been sent to the provided email. Please check your email.' };
                 }
 
-                // Token still valid
-                return {
-                    message: 'Token has already been sent. Please check your email.',
-                };
+                return { error: 'User already exists' };
             }
 
             // No user exists
@@ -62,7 +44,7 @@ class AuthService {
 
             return {
                 user,
-                message: 'User created successfully',
+                message: 'A token has been sent to the provided email. Please check your inbox.',
             };
 
         } catch (e) {
@@ -79,7 +61,7 @@ class AuthService {
      */
 
     verifyOTP = async (validatedData) => {
-        const { otp, email } = validatedData;
+        const { code: otp, email } = validatedData;
 
         try {
             const user = await User.findOne({ email }).populate('token');
@@ -95,15 +77,15 @@ class AuthService {
             const token = user.token;
 
             if (!token || !token.otp) {
-                return { error: 'OTP token not found or invalid' };
+                return { error: 'Code not found or invalid' };
             }
 
             if (token.otp !== otp) {
-                return { error: 'OTP is incorrect. Try again.' };
+                return { error: 'That code wasn\'t valid. Give it another try!' };
             }
 
             if (token.expiresAt < Date.now()) {
-                return { error: 'OTP has expired. Request a new one.' };
+                return { error: 'Code has expired. Request a new one.' };
             }
 
             const registrationToken = await generateToken(72);

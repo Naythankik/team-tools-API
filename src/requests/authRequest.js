@@ -8,7 +8,7 @@ const emailRequest = (data) => {
 
 const verifyOTPRequest = (data) => {
     return Joi.object({
-        otp: Joi.number().required(),
+        code: Joi.number().required(),
         email: Joi.string().email().required()
     }).validate(data, { abortEarly: false });
 }

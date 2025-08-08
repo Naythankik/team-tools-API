@@ -14,6 +14,8 @@ const userSchema = new Schema(
         username: {
             type: String,
             unique: true,
+            sparse: true,
+            trim: true,
         },
         email: {
             type: String,
@@ -36,6 +38,7 @@ const userSchema = new Schema(
         },
         telephone: {
             type: String,
+            sparse: true,
             unique: true,
         },
         isActive: {
