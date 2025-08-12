@@ -209,7 +209,7 @@ class AuthService {
         const refreshToken = generateJwtToken(user, '30d');
 
         user.whenLastActive = new Date();
-        user.isActive = true;
+        user.status = 'online';
         await user.save();
 
         return {
@@ -279,7 +279,7 @@ class AuthService {
         const decoded = verifyJwtToken(token);
 
         const user = await User.findById(decoded.id);
-        if (!user || !user.isActive) {
+        if (!user || user.status === 'offline') {
             throw new Error('Invalid or inactive user');
         }
 

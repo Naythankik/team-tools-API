@@ -17,6 +17,7 @@ const userSchema = new Schema(
             sparse: true,
             trim: true,
         },
+        title: String,
         email: {
             type: String,
             unique: true,
@@ -24,7 +25,7 @@ const userSchema = new Schema(
         },
         avatar: {
             type: String,
-            default: 'https://res.cloudinary.com/dxfq3iotg/image/upload/v1618434288/users/default_j9j98z.png',
+            default: 'https://randomuser.me/api/portraits/men/100.jpg',
         },
         password: {
             type: String,
@@ -41,9 +42,10 @@ const userSchema = new Schema(
             sparse: true,
             unique: true,
         },
-        isActive: {
-            type: Boolean,
-            default: false,
+        status: {
+            type: String,
+            enum: ['online', 'offline', 'away'],
+            default: 'offline',
         },
         whenLastActive: Date,
         isEmailVerified: {
