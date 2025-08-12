@@ -205,7 +205,7 @@ class AuthService {
             throw new Error('Account not verified');
         }
 
-        const accessToken = generateJwtToken(user, '15m');
+        const accessToken = generateJwtToken(user, process.env.NODE_ENV === 'production' ? '15m': '40d');
         const refreshToken = generateJwtToken(user, '30d');
 
         user.whenLastActive = new Date();

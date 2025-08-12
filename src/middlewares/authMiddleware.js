@@ -19,7 +19,7 @@ const authenticate = async (req, res, next) => {
 
         const user = await User.findById(decoded.id);
 
-        if (!user || !user.isActive) {
+        if (!user || user.status === 'offline') {
             return errorResponse(res, 'User no longer exists or inactive', 401)
         }
 
