@@ -1,4 +1,4 @@
-const User = require('../models/userModel')
+const User = require('../models/User')
 const {errorResponse} = require("../utils/responseHandler");
 const { verifyJwtToken } = require("../utils/token");
 

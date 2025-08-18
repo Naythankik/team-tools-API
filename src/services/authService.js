@@ -1,5 +1,5 @@
-const User = require('../models/userModel');
-const Token = require('../models/tokenModel');
+const User = require('../models/User');
+const Token = require('../models/Token');
 const { generateCode, generateToken, generateJwtToken, verifyJwtToken} = require("../utils/token");
 const { createUserMail, createForgotPasswordMail} = require("../utils/mail");
 const UserResource = require("../resources/userResource");

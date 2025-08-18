@@ -9,6 +9,8 @@ router.get('/me', userController.getCurrentUser);
 router.put('/update-profile', userController.updateProfile)
 router.put('/update-password', userController.updatePassword)
 router.put('/update-avatar', multerUpload.single('avatar'), userController.updateAvatar)
+
+router.get('/dashboard', userController.dashboard)
 //
 // router.all('*', (req, res) => {
 //     res.status(404).json({ message: 'Route not found in user API' });

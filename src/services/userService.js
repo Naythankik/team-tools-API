@@ -1,4 +1,7 @@
-const User = require('../models/userModel');
+const User = require('../models/User');
+const Channel = require('../models/Channel');
+const DirectMessage = require('../models/DirectMessage');
+
 const {errorResponse} = require("../utils/responseHandler");
 const {uploadImage} = require("../utils/uploadImage");
 
@@ -91,6 +94,25 @@ class UserService {
 
         } catch (err) {
             console.error(err);
+            return { error: 'Internal server error' };
+        }
+    }
+
+    dashboard = async (userId) => {
+        try{
+            const [channels, DMs] = await Promise.all([
+                Channel.find({
+                    createdBy: userId,
+                    members: { $in: [userId] }
+                }),
+                DirectMessage.find()
+            ]);
+
+            return {
+                message: 'Dashboard fetched successfully',
+                data: { channels, DMs }
+            }
+        }catch (e){
             return { error: 'Internal server error' };
         }
     }

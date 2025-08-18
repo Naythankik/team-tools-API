@@ -1,6 +1,6 @@
 const {errorResponse, successResponse} = require("../utils/responseHandler");
 const userService = require("../services/userService");
-const User = require('../models/userModel');
+const User = require('../models/User');
 const UserResource = require("../resources/userResource");
 const {updateProfileRequest, updatePasswordRequest} = require("../requests/userRequest");
 
@@ -97,6 +97,28 @@ class UserController{
             return successResponse(
                 res,
                 result.message,
+                200
+            );
+        } catch (e) {
+            console.log(e)
+            return errorResponse(res, "Internal Server Error", 500, e.message);
+        }
+    }
+
+    dashboard = async (req, res) => {
+        const { id } = req.user
+
+        try {
+            const result = await userService.dashboard(id);
+
+            if (result.error) {
+                return errorResponse(res, result.error, 409);
+            }
+
+            return successResponse(
+                res,
+                result.message,
+                result.data,
                 200
             );
         } catch (e) {
