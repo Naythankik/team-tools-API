@@ -1,7 +1,7 @@
 const {errorResponse} = require("../utils/responseHandler");
 const Workspace = require("../models/Workspace");
 
-const verifyMembership = async (req, res, next) => {
+const verifyWorkspaceMembership = async (req, res, next) => {
     try{
         const workspace = req.params.workspace;
 
@@ -29,5 +29,5 @@ const verifyMembership = async (req, res, next) => {
 }
 
 module.exports = {
-    verifyMembership
+    verifyWorkspaceMembership
 }

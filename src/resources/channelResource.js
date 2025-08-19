@@ -7,6 +7,7 @@ const formatChannel = (channel) => {
         id: channel._id,
         workspace: channel.workspace,
         name: channel.name,
+        slug: channel.slug,
         description: channel.description,
         channelType: channel.channelType,
         members: UserResource(channel.members),
@@ -18,6 +19,8 @@ const formatChannel = (channel) => {
     };
 };
 
-const formatChannelList = (channels = []) => channels.map(formatChannel);
+const formatChannelList = (channels = []) => {
+    return Array.isArray(channels) ? channels.map(formatChannel) : formatChannel(channels);
+};
 
 module.exports = formatChannelList;

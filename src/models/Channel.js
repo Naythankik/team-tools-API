@@ -47,6 +47,8 @@ const channelSchema = new Schema(
             ref: 'User',
             required: true,
         },
+
+        // If true, new users can be added to the channel
         isDefault: {
             type: Boolean,
             default: false,
@@ -59,6 +61,8 @@ const channelSchema = new Schema(
     },
     {
         timestamps: true,
+        toObject: { virtuals: true },
+        toJSON: { virtuals: true },
     }
 );
 

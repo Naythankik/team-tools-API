@@ -1,21 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const WorkspaceController = require('../controllers/workspaceController');
-const {verifyMembership} = require("../middlewares/WorkspaceMiddleware");
-//
-// // GET /api/v1/workspaces
-router.get('/:workspace', verifyMembership, WorkspaceController.dashboard);
-//
-// // GET /api/v1/workspaces/:id
-// router.get('/:id', getWorkspace);
-//
-// // POST /api/v1/workspaces
-// router.post('/', createWorkspace);
-//
-// // PATCH /api/v1/workspaces/:id
-// router.patch('/:id', updateWorkspace);
-//
-// // DELETE /api/v1/workspaces/:id
-// router.delete('/:id', deleteWorkspace);
+const { verifyWorkspaceMembership } = require("../middlewares/WorkspaceMiddleware");
+const {verifyChannelMembership} = require("../middlewares/ChannelMiddleware");
+
+
+router.get('/:workspace', verifyWorkspaceMembership, WorkspaceController.dashboard);
+router.get('/:workspace/channels/:channel', verifyWorkspaceMembership, verifyChannelMembership, WorkspaceController.getChannel)
 
 module.exports = router;
