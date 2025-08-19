@@ -1,5 +1,6 @@
 const { faker } = require('@faker-js/faker');
 const User = require('../../models/User');
+const slugify = require("slugify");
 
 async function randomId(model, match = {}) {
     const result = await model.aggregate([
@@ -27,13 +28,16 @@ const WorkspaceFactory = async (count) => {
                 members.push(memberId);
             }
         }
+        const name = faker.company.name()
 
         document.push({
-            name: faker.company.name(),
+            name: name,
+            slug: slugify(name),
             owner: ownerId,
             members,
-            description: faker.lorem.paragraph({ min: 1, max: 4 }),
+            description: faker.lorem.paragraph({ min: 1, max: 2 }),
             isArchived: faker.helpers.arrayElement([true, false]),
+            coverImage: faker.image.avatar()
         });
     }
 

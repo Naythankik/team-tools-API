@@ -1,15 +1,10 @@
 const express = require('express');
 const router = express.Router();
-// const {
-//     getAllWorkspaces,
-//     getWorkspace,
-//     createWorkspace,
-//     updateWorkspace,
-//     deleteWorkspace,
-// } = require('../controllers/workspaceController');
+const WorkspaceController = require('../controllers/workspaceController');
+const {verifyMembership} = require("../middlewares/WorkspaceMiddleware");
 //
 // // GET /api/v1/workspaces
-// router.get('/', getAllWorkspaces);
+router.get('/:workspace', verifyMembership, WorkspaceController.dashboard);
 //
 // // GET /api/v1/workspaces/:id
 // router.get('/:id', getWorkspace);

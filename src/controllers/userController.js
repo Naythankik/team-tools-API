@@ -2,7 +2,7 @@ const {errorResponse, successResponse} = require("../utils/responseHandler");
 const userService = require("../services/userService");
 const User = require('../models/User');
 const UserResource = require("../resources/userResource");
-const {updateProfileRequest, updatePasswordRequest} = require("../requests/userRequest");
+const { updateProfileRequest, updatePasswordRequest } = require("../requests/userRequest");
 
 class UserController{
     logout = async (req, res) => {
@@ -105,11 +105,11 @@ class UserController{
         }
     }
 
-    dashboard = async (req, res) => {
+    workspace = async (req, res) => {
         const { id } = req.user
 
         try {
-            const result = await userService.dashboard(id);
+            const result = await userService.workspace(id);
 
             if (result.error) {
                 return errorResponse(res, result.error, 409);

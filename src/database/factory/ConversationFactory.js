@@ -18,7 +18,8 @@ const ConversationFactory = async (count) => {
             directMessage: d._id,
             sender,
             type,
-            readBy: [sender]
+            readBy: [sender],
+            createdAt: faker.date.recent(),
         };
 
         // conditional fields

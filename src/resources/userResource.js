@@ -18,6 +18,12 @@ const formatUser = (user) => {
     };
 };
 
-// const formatUserList = (users = []) => users.map(formatUser);
+const formatUserList = (users) => {
+    if(Array.isArray(users)){
+      return users.map(formatUser)
+    }else {
+        return !users ? users : formatUser(users)
+    }
+};
 
-module.exports = formatUser;
+module.exports = formatUserList;

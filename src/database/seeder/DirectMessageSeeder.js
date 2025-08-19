@@ -20,7 +20,7 @@ const DirectMessageSeeder = {
             if (lastConvo) {
                 await DM.findByIdAndUpdate(dm._id, {
                     lastMessage: {
-                        text: lastConvo.text || '',
+                        text: lastConvo.text || lastConvo.mediaUrl,
                         at: lastConvo.createdAt,
                         sender: lastConvo.sender,
                     },

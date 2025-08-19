@@ -1,4 +1,5 @@
 const { Schema, model } = require('mongoose');
+const slugify = require("slugify");
 
 const channelSchema = new Schema(
     {
@@ -16,6 +17,11 @@ const channelSchema = new Schema(
             trim: true,
             lowercase: true,
             maxlength: 80,
+        },
+        slug: {
+            type: String,
+            trim: true,
+            lowercase: true,
         },
         // A short description or topic for the channel.
         description: {
@@ -55,6 +61,13 @@ const channelSchema = new Schema(
         timestamps: true,
     }
 );
+
+channelSchema.pre('save', function (next) {
+    if (this.isModified('name')) {
+        this.slug = slugify(this.name, { lower: true });
+    }
+    next();
+})
 
 // This ensures that a channel name is unique ONLY within its specific workspace.
 // So, two different workspaces can both have a channel named "general".

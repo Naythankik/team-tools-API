@@ -1,6 +1,6 @@
 const User = require('../models/User');
-const Channel = require('../models/Channel');
-const DirectMessage = require('../models/DirectMessage');
+const Workspace = require('../models/Workspace');
+const WorkspaceResource = require('../resources/workspaceResource');
 
 const {errorResponse} = require("../utils/responseHandler");
 const {uploadImage} = require("../utils/uploadImage");
@@ -98,21 +98,21 @@ class UserService {
         }
     }
 
-    dashboard = async (userId) => {
+    workspace = async (userId) => {
         try{
-            const [channels, DMs] = await Promise.all([
-                Channel.find({
-                    createdBy: userId,
-                    members: { $in: [userId] }
-                }),
-                DirectMessage.find()
-            ]);
+            const workspace = await Workspace.find({
+                $or: [
+                    { owner: userId },
+                    { members: userId, isArchived: false }
+                ]
+            }).select('-members -owner -updatedAt').sort('name').lean();
 
             return {
-                message: 'Dashboard fetched successfully',
-                data: { channels, DMs }
+                message: 'Workspace fetched successfully',
+                data: { workspaces: WorkspaceResource(workspace)}
             }
         }catch (e){
+            console.log(e)
             return { error: 'Internal server error' };
         }
     }

@@ -21,6 +21,7 @@ const UserFactory = async (count) => {
             password: password,
             role: 'user',
             telephone: faker.phone.imei(),
+            userAgent: faker.internet.userAgent(),
             status: status,
             whenLastActive: status === 'offline' ? faker.date.past() : null,
             isEmailVerified: faker.helpers.arrayElement([true, false]),

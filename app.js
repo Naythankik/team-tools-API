@@ -37,9 +37,8 @@ if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
 
-setupSwaggerDocs(app)
-
-const path = '/3ird-space/v1/api'
+setupSwaggerDocs(app);
+const path = '/3ird-space/v1/api';
 
 app.use(`${path}/auth`, authRoutes)
 app.use(`${path}/user`, authenticate, authorizeRoles('user'), userRoutes)

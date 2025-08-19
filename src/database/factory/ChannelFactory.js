@@ -1,40 +1,42 @@
 const { faker } = require('@faker-js/faker');
-const User = require('../../models/User');
-const Workspace = require('../../models/Workspace'); // <-- important
+const Workspace = require('../../models/Workspace');
+const slugify = require("slugify");
 
-async function randomId(model, match = {}) {
-    const result = await model.aggregate([
-        { $match: match },
+async function randomWorkspaceId() {
+    const result = await Workspace.aggregate([
         { $sample: { size: 1 } },
-        { $project: { _id: 1 } },
+        { $project: { _id: 1, members: 1 } },
     ]);
-    return result[0]?._id;
+    return result[0];
 }
 
 const ChannelFactory = async (count) => {
     const document = [];
 
     for (let i = 0; i < count; i++) {
-        const createdBy = await randomId(User);
+        const workspace = await randomWorkspaceId();
 
-        const members = [createdBy];
+        const createdBy = faker.helpers.arrayElement(workspace.members);
 
-        const numberOfExtraMembers = faker.number.int({ min: 5, max: 15 });
+        const remainingMembers = workspace.members.filter(
+            (m) => String(m) !== String(createdBy)
+        );
 
-        for (let x = 0; x < numberOfExtraMembers; x++) {
-            const memberId = await randomId(User);
-            if (memberId && !members.includes(memberId)) {
-                members.push(memberId);
-            }
-        }
+        const numberToTake = faker.number.int({
+            min: 2,
+            max: remainingMembers.length,
+        });
+        const members = remainingMembers.slice(0, numberToTake);
 
+        const name = faker.company.catchPhraseNoun().toLowerCase()
         document.push({
-            workspace: await randomId(Workspace),
-            name: faker.company.catchPhraseNoun().toLowerCase(),
+            workspace: workspace._id,
+            name,
+            slug: slugify(name),
             description: faker.lorem.words({ min: 10, max: 25 }),
             channelType: faker.helpers.arrayElement(['public', 'private']),
-            members,
             createdBy,
+            members,
             isDefault: faker.helpers.arrayElement([true, false]),
             isArchived: faker.helpers.arrayElement([true, false]),
         });

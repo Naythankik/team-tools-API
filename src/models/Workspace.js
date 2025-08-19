@@ -1,4 +1,5 @@
 const { Schema, model } = require('mongoose');
+const slugify = require('slugify');
 
 const workspaceSchema = new Schema(
     {
@@ -8,7 +9,11 @@ const workspaceSchema = new Schema(
             trim: true,
             maxlength: 80,
         },
-
+        slug: {
+            type: String,
+            trim: true,
+            lowercase: true,
+        },
         owner: {
             type: Schema.Types.ObjectId,
             ref: 'User',
@@ -29,8 +34,20 @@ const workspaceSchema = new Schema(
             type: Boolean,
             default: false,
         },
+        coverImage: {
+            type: String
+        }
     },
     { timestamps: true }
 );
+
+workspaceSchema.pre('save', function (next) {
+    console.log(this)
+    if (this.isModified('name')) {
+        this.slug = slugify(this.name, { lower: true });
+    }
+    next();
+});
+
 
 module.exports = model('Workspace', workspaceSchema);

@@ -47,6 +47,10 @@ const userSchema = new Schema(
             enum: ['online', 'offline', 'away'],
             default: 'offline',
         },
+        userAgent: {
+            type: String,
+            required: false,
+        },
         whenLastActive: Date,
         isEmailVerified: {
             type: Boolean,

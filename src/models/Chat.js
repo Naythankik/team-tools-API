@@ -2,6 +2,12 @@ const { Schema, model } = require('mongoose');
 
 const chatSchema = new Schema(
     {
+        workspace:{
+            type: Schema.Types.ObjectId,
+            ref: 'Workspace',
+            required: true,
+            index: true,
+        },
         channel: {
             type: Schema.Types.ObjectId,
             ref: 'Channel',

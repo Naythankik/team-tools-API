@@ -1,7 +1,12 @@
 const { Schema, model, Types } = require('mongoose');
 
-const directMessageSchema = new Schema(
-    {
+const directMessageSchema = new Schema({
+        workspace: {
+            type: Types.ObjectId,
+            ref: 'Workspace',
+            required: true,
+            index: true,
+        },
         participants: [
             {
                 type: Types.ObjectId,
