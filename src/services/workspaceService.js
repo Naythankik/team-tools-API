@@ -16,9 +16,12 @@ class WorkspaceService {
                         { createdBy: userId },
                         { members: userId }
                     ]
-                }).select('-workspace -members -createdBy -updatedAt -createdAt')
+                }).select('_id channelType name slug')
                     .sort('username').lean(),
-                DirectMessage.find({participants: userId}).populate('participants', 'firstName lastName avatar').lean()
+
+                DirectMessage.find({participants: userId, workspace: workspaceId})
+                    .select('_id participants').populate('participants', 'firstName lastName avatar status')
+                    .lean()
             ]);
 
             return {
@@ -39,13 +42,13 @@ class WorkspaceService {
             const [channel, chats] = await Promise.all([
                 Channel.findOne({ _id: channelId })
                     .select('-workspace')
-                    .populate('members', 'firstName lastName username avatar')
+                    .populate('members', 'firstName lastName username avatar status')
                     .populate('createdBy', 'firstName lastName username avatar'),
 
                 Chat.find({ channel: channelId, workspace })
                     .sort({ createdAt: -1 })
                     .limit(limit)
-                    .populate('sender', 'firstName lastName username avatar')
+                    .populate('sender', 'firstName lastName avatar')
                     .populate('reactions.user', 'firstName lastName username avatar')
                     .lean()
             ]);

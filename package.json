@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon app.js",
+    "test": "jest --detectOpenHandles",
+    "dev": "nodemon server.js",
     "seed": "node seeder.js"
   },
   "keywords": [],
@@ -30,6 +30,8 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^9.9.0",
-    "nodemon": "^3.1.10"
+    "jest": "^30.0.5",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.4"
   }
 }

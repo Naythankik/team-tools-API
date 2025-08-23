@@ -4,9 +4,6 @@ const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const morgan = require('morgan')
 const setupSwaggerDocs = require('./swagger')
-const PORT = process.env.PORT
-const connection = require('./src/config/databaseConnection')
-
 const authRoutes = require('./src/routes/authRoutes')
 const userRoutes = require('./src/routes/userRoutes')
 const channelRoutes = require('./src/routes/channelRoutes')
@@ -31,8 +28,6 @@ app.use(cors({
     ],
 }));
 
-connection()
-
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
@@ -40,18 +35,15 @@ if (process.env.NODE_ENV === 'development') {
 setupSwaggerDocs(app);
 const path = '/3ird-space/v1/api';
 
-app.use(`${path}/auth`, authRoutes)
-app.use(`${path}/user`, authenticate, authorizeRoles('user'), userRoutes)
+app.use(`${path}/auth`, authRoutes);
+app.use(`${path}/user`, authenticate, authorizeRoles('user'), userRoutes);
 app.use(`${path}/workspaces`, authenticate, workspaceRoutes);
 app.use(`${path}/channels`, authenticate, channelRoutes);
 
-
-app.use('/', (req, res) =>{
+app.use('/', (req, res) => {
     res.status(404).json({
         message: 'Whoops, This is a universal route'
-    })
-})
+    });
+});
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`)
-})
+module.exports = app;

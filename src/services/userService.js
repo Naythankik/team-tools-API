@@ -105,7 +105,10 @@ class UserService {
                     { owner: userId },
                     { members: userId, isArchived: false }
                 ]
-            }).select('-members -owner -updatedAt').sort('name').lean();
+            })
+                .select('-owner -updatedAt').sort('name')
+                .populate('members', '-_id firstname lastName avatar')
+                .lean();
 
             return {
                 message: 'Workspace fetched successfully',
