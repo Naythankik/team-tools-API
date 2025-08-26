@@ -20,7 +20,17 @@ const directMessageSchema = new Schema({
             sender: { type: Types.ObjectId, ref: 'User' },
         },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+        toObject: { virtuals: true },
+        toJSON: { virtuals: true }
+    }
 );
+
+directMessageSchema.virtual('conversation', {
+    ref: 'Conversation',
+    localField: '_id',
+    foreignField: 'directMessage'
+});
 
 module.exports = model('DirectMessage', directMessageSchema);

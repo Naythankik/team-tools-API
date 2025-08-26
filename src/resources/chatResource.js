@@ -9,7 +9,7 @@ const formatChat = (chat) => {
         channel: chat.channel,
         attachments: chat.attachments,
         content: chat.content,
-        reactions: chat?.reactions.map(user => ({user: UserResource(user), ...user})),
+        reactions: chat?.reactions?.map(user => ({user: UserResource(user), ...user})),
         sender: UserResource(chat.sender),
         isDeleted: chat.isDeleted,
         createdAt: chat.createdAt,

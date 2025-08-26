@@ -1,19 +1,20 @@
 const {errorResponse, successResponse} = require("../utils/responseHandler");
-const ChannelService = require("../services/channelService");
+const ChatService = require("../services/chatService");
 
-class ChannelController {
-    constructor(service = new ChannelService()) {
+class ChatController {
+    constructor(service = new ChatService()) {
         this.service = service;
     }
 
-    getChannel = async (req, res) => {
-        const {user, channel, workspace } = req;
+    readChat = async (req, res) => {
+        const {user, workspace } = req;
+        const { chat } = req.params;
 
         try{
-            const result = await this.service.readChannel(
+            const result = await this.service.readChat(
                 user.id,
                 workspace.id,
-                channel.id
+                chat
             );
 
             if (result.error) {
@@ -33,4 +34,4 @@ class ChannelController {
     }
 }
 
-module.exports = ChannelController;
+module.exports = ChatController;
