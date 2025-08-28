@@ -9,7 +9,7 @@ class ChatService {
                 workspace,
                 participants: userId
             })
-                .populate('participants', 'id firstName lastName avatar')
+                .populate('participants', 'id firstName status username lastName avatar')
                 .populate({
                     path: 'messages',
                     select: 'chat media type content reactions sender isDeleted',
