@@ -1,4 +1,4 @@
-const { Schema, model } = require('mongoose');
+const { Schema, model, Types} = require('mongoose');
 
 const chatSchema = new Schema(
     {
@@ -9,41 +9,38 @@ const chatSchema = new Schema(
             index: true,
         },
         channel: {
-            type: Schema.Types.ObjectId,
+            type: Types.ObjectId,
             ref: 'Channel',
-            required: true,
+            required: false,
             index: true,
         },
-        sender: {
-            type: Schema.Types.ObjectId,
-            ref: 'User',
-            required: true,
-        },
-        content: {
+        type: {
             type: String,
+            enum: ['one-to-one', 'group', 'channel'],
             required: true,
-            trim: true,
         },
-        attachments: [
+        participants: [
             {
-                url: String,
-                type: {
-                    type: String,
+                type: Types.ObjectId,
+                ref: 'User',
+                required: function () {
+                    return this.type !== 'channel';
+                    // channels can derive participants from Channel model
                 },
-            }
-        ],
-        reactions: [
-            {
-                user: { type: Schema.Types.ObjectId, ref: 'User' },
-                emoji: String,
-            }
-        ],
-        isDeleted: {
-            type: Boolean,
-            default: false,
-        },
+            },
+        ]
     },
     { timestamps: true }
 );
+
+chatSchema.virtual('messages', {
+    ref: 'Message',
+    localField: '_id',
+    foreignField: 'chat'
+});
+
+chatSchema.index({ workspace: 1, type: 1 });
+chatSchema.index({ participants: 1 });
+chatSchema.index({ channel: 1, type: 1 });
 
 module.exports = model('Chat', chatSchema);

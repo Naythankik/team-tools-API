@@ -1,5 +1,6 @@
 const Channel = require("../models/Channel");
 const Chat = require("../models/Chat");
+const Message = require("../models/Message");
 
 const ChatResource = require("../resources/chatResource");
 const ChannelResource = require("../resources/channelResource");
@@ -13,17 +14,24 @@ class ChannelService {
                     .populate('members', 'firstName lastName username avatar status')
                     .populate('createdBy', 'firstName lastName username avatar'),
 
-                Chat.find({ channel: channelId, workspace })
-                    .sort({ createdAt: -1 })
-                    .limit(limit)
-                    .populate('sender', 'firstName lastName avatar')
-                    .populate('reactions.user', 'firstName lastName username avatar')
+                Chat.findOne({ channel: channelId, workspace })
+                    .populate({
+                        path: 'messages',
+                        select: 'chat media type content reactions sender isDeleted',
+                        populate: {
+                            path: 'sender',
+                            select: 'firstName lastName username avatar status'
+                        },
+                        options: { sort: { createdAt: -1 }, limit }
+                    })
                     .lean()
             ]);
 
             if (!channel) {
                 return { error: "No channel found for this user" };
             }
+
+            chats.participants = channel.members;
 
             return {
                 message: "",

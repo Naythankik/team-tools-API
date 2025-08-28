@@ -107,7 +107,11 @@ class UserService {
                 ]
             })
                 .select('-owner -updatedAt').sort('name')
-                .populate('members', '-_id firstname lastName avatar')
+                .populate({
+                    path: 'members',
+                    select: '-_id firstname lastName avatar',
+                    limit: 5
+                })
                 .lean();
 
             return {

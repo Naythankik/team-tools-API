@@ -23,7 +23,13 @@ const authenticate = async (req, res, next) => {
             return errorResponse(res, 'User no longer exists or inactive', 401)
         }
 
-        req.user = user;
+        req.user = {
+            id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role
+        };
         next();
     } catch (err) {
         if (err.name === 'TokenExpiredError') {

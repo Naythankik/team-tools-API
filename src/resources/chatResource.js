@@ -1,4 +1,5 @@
 const UserResource = require('./userResource');
+const MessageResource = require('./messageResource');
 
 const formatChat = (chat) => {
     if (!chat) return null;
@@ -7,11 +8,9 @@ const formatChat = (chat) => {
         id: chat._id,
         workspace: chat.workspace,
         channel: chat.channel,
-        attachments: chat.attachments,
-        content: chat.content,
-        reactions: chat?.reactions?.map(user => ({user: UserResource(user), ...user})),
-        sender: UserResource(chat.sender),
-        isDeleted: chat.isDeleted,
+        type: chat.type,
+        participants: UserResource(chat.participants),
+        messages: MessageResource(chat.messages),
         createdAt: chat.createdAt,
         updatedAt: chat.updatedAt,
     };

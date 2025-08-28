@@ -12,8 +12,8 @@ const verifyWorkspaceMembership = async (req, res, next) => {
         const verifyUser = await Workspace.findOne({
             slug: workspace,
             $or: [
-                { members: req.user._id },
-                { owner: req.user._id}
+                { members: req.user.id },
+                { owner: req.user.id}
             ]
         });
 

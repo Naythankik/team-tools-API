@@ -13,7 +13,7 @@ const verifyChannelMembership = async (req, res, next) => {
             slug: channelSlug,
             workspace: req.workspace.id,
             $or: [
-                { members: req.user._id },
+                { members: req.user.id },
                 { createdBy: req.user._id },
             ],
         });

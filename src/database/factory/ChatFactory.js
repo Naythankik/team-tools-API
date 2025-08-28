@@ -24,8 +24,10 @@ const ChatFactory = async (count) => {
 
     for (let i = 0; i < count; i++) {
         const workspace = await randomWorkspaceId();
+        const type = faker.helpers.arrayElement(['one-to-one', 'group', 'channel']);
         let channel = await randomId(Channel, { workspace: workspace._id });
 
+        // Create a channel if none exists in this workspace
         if (!channel) {
             const createdBy = faker.helpers.arrayElement(workspace.members);
             const remainingMembers = workspace.members.filter(
@@ -53,38 +55,28 @@ const ChatFactory = async (count) => {
             channel = newChannel._id;
         }
 
-        // ----- reactions (use only workspace members) -----
-        const reactions = [];
-        const numberOfReactions = faker.number.int({ min: 1, max: 3 });
-        for (let r = 0; r < numberOfReactions; r++) {
-            reactions.push({
-                user: faker.helpers.arrayElement(workspace.members), // << changed
-                emoji: faker.internet.emoji(),
-            });
-        }
-
-        // ----- attachments -----
-        const attachments = [];
-        const hasAttachments = faker.datatype.boolean({ probability: 0.7 });
-        if (hasAttachments) {
-            const numberOfAttachments = faker.number.int({ min: 1, max: 3 });
-            for (let a = 0; a < numberOfAttachments; a++) {
-                attachments.push({
-                    url: faker.internet.url(),
-                    type: faker.helpers.arrayElement(['image', 'video', 'audio', 'file']),
-                });
-            }
-        }
-
-        document.push({
+        // Base chat object
+        const chatDoc = {
             workspace: workspace._id,
-            channel,
-            sender: faker.helpers.arrayElement(workspace.members),
-            content: faker.lorem.words({ min: 10, max: 25 }),
-            attachments,
-            reactions,
-            isDeleted: faker.helpers.arrayElement([true, false]),
-        });
+            channel: type === 'channel' ? channel : undefined,
+            type,
+            createdAt: faker.date.recent(),
+        };
+
+        // Add participants only if not a channel
+        if (type === 'one-to-one') {
+            chatDoc.participants = faker.helpers.arrayElements(workspace.members, 2);
+        } else if (type === 'group') {
+            const groupSize = faker.number.int({
+                min: 3,
+                max: Math.min(8, workspace.members.length),
+            });
+            chatDoc.participants = faker.helpers.arrayElements(workspace.members, groupSize);
+        }else{
+            chatDoc.participants = undefined
+        }
+
+        document.push(chatDoc);
     }
 
     return document;

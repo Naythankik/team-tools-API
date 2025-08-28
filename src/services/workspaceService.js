@@ -1,13 +1,13 @@
 const Channel = require("../models/Channel");
-const DirectMessage = require("../models/DirectMessage");
+const Chat = require("../models/Chat");
 
 const ChannelResource = require("../resources/channelResource");
-const DirectMessageResource = require("../resources/directMessageResource");
+const ChatResource = require("../resources/chatResource");
 
 class WorkspaceService {
     dashboard = async (userId, workspaceId) => {
         try{
-            const [channels, DMs] = await Promise.all([
+            const [channels, chats] = await Promise.all([
                 Channel.find({
                     workspace: workspaceId,
                     $or: [
@@ -17,8 +17,19 @@ class WorkspaceService {
                 }).select('_id channelType name slug')
                     .sort('username').lean(),
 
-                DirectMessage.find({participants: userId, workspace: workspaceId})
-                    .select('_id participants').populate('participants', 'firstName lastName avatar status')
+                Chat.find({
+                    workspace: workspaceId,
+                    type: { $in: ['one-to-one', 'group'] },
+                    participants: userId
+                }).select('_id type participants')
+                    .populate({
+                        path: 'participants',
+                        match: {
+                            _id: { $ne: userId }
+                        },
+                        select: 'firstName lastName avatar status',
+                        justOne: true
+                    })
                     .lean()
             ]);
 
@@ -26,7 +37,7 @@ class WorkspaceService {
                 message: 'Dashboard fetched successfully',
                 data: {
                     channels: ChannelResource(channels),
-                    DMs: DirectMessageResource(DMs)
+                    chats: ChatResource(chats)
                 }
             }
         }catch (e){

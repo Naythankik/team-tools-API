@@ -1,7 +1,7 @@
 const UserSeeder = require('./UserSeeder');
 const WorkspaceSeeder = require('./WorkspaceSeeder');
 const ChannelSeeder = require('./ChannelSeeder');
-const DMSeeder = require('./DirectMessageSeeder');
+const MessageSeeder = require('./MessageSeeder');
 const ChatSeeder = require('./ChatSeeder');
 
 const DatabaseSeeder = async () => {
@@ -10,7 +10,7 @@ const DatabaseSeeder = async () => {
         await WorkspaceSeeder.run(5);
         await ChannelSeeder.run(5);
         await ChatSeeder.run(5);
-        await DMSeeder.run(5);
+        await MessageSeeder.run(5);
     }catch (e){
         console.log(e)
         process.exit(1);
